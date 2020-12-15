@@ -1,0 +1,156 @@
+{% load static %}
+<html>
+
+<head>
+    <title>JokeBot</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- <link rel="stylesheet" type="text/css" href="./style.css"> -->
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+</head>
+
+<body class="bg">
+    <div id="allMessages" class="message-area">
+    </div>
+
+    <form id="messageForm">
+        <div class="message-input">
+            <input type="text" class="chat-input" name="message" id="message" placeholder="Enter your message" style="margin-bottom:10px;">
+            <button type="submit" class="chat-submit" onclick="sendMessage()">Send</button>
+        </div>
+    </form>
+
+    <script>
+        var form = document.getElementById("messageForm");
+
+        function handleForm(event) {
+            event.preventDefault();
+        }
+        form.addEventListener('submit', handleForm);
+
+        messages = ['Hello'];
+
+        for (let index = 0; index < messages.length; index++) {
+            appendToChat(messages[index], 'cm-msg-text');
+        }
+
+        function appendToChat(message, elementClass) {
+            var node = document.createElement("div");
+            node.classList.add(elementClass);
+            node.classList.add('chat-msg');
+            var textnode = document.createTextNode(message);
+            node.appendChild(textnode);
+            document.getElementById("allMessages").appendChild(node);
+        }
+
+        var reqType;
+        var resType = 'none';
+        async function sendMessage() {
+            var newMsg = document.getElementById("message").value.trim();
+
+            if (newMsg) {
+                appendToChat(newMsg, 'chat-msg-self');
+                scrollTo(document.scrollingElement, 800);
+
+                var xhttp = new XMLHttpRequest();
+                xhttp.onreadystatechange = function() {
+                    if (this.readyState == 4 && this.status == 200) {
+                        let res = JSON.parse(this.responseText);
+                        let message = res.message;
+                        resType = res.resType;
+                        console.log(resType);
+                        appendToChat(message, 'cm-msg-text');
+                        scrollTo(document.scrollingElement, 800);
+
+                        document.getElementById("message").value = '';
+                    }
+                };
+                xhttp.open("POST", "http://127.0.0.1:8000/message", true);
+                xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+                if (resType.localeCompare('ask_joke') == 0) {
+                    reqType = "store_joke"
+                } else if (resType.localeCompare('ask_name') == 0) {
+                    console.log('inside ask')
+                    reqType = "name"
+                } else {
+                    reqType = "none"
+                }
+                body = {
+                    "message": newMsg,
+                    "reqType": reqType
+                };
+                xhttp.send(JSON.stringify(body));
+            }
+        }
+
+        function scrollTo(element, duration) {
+            if (!element) {
+                return
+            }
+            var target = element.scrollHeight
+            target = Math.round(target)
+            duration = Math.round(duration)
+            if (duration < 0) {
+                return false
+            }
+            if (duration === 0) {
+                element.scrollTop = target
+                return true
+            }
+
+            var start_time = Date.now()
+            var end_time = start_time + duration
+
+            var start_top = element.scrollTop
+            var distance = target - start_top
+
+            // based on http://en.wikipedia.org/wiki/Smoothstep
+            var smooth_step = function(start, end, point) {
+                if (point <= start) {
+                    return 0
+                }
+                if (point >= end) {
+                    return 1
+                }
+                var x = (point - start) / (end - start) // interpolation
+                return x * x * (3 - 2 * x)
+            }
+
+            // This is to keep track of where the element's scrollTop is
+            // supposed to be, based on what we're doing
+            var previous_top = element.scrollTop
+
+            // This is like a think function from a game loop
+            var scroll_frame = function() {
+                    if (element.scrollTop !== previous_top) {
+                        return false
+                    }
+
+                    // set the scrollTop for this frame
+                    var now = Date.now()
+                    var point = smooth_step(start_time, end_time, now)
+                    var frameTop = Math.round(start_top + (distance * point))
+                    element.scrollTop = frameTop
+
+                    // check if we're done!
+                    if (now >= end_time) {
+                        return true
+                    }
+
+                    // If we were supposed to scroll but didn't, then we
+                    // probably hit the limit, so consider it done; not
+                    // interrupted.
+                    if (element.scrollTop === previous_top && element.scrollTop !== frameTop) {
+                        return true
+                    }
+                    previous_top = element.scrollTop
+
+                    // schedule next frame for execution
+                    setTimeout(scroll_frame, 0)
+                }
+                // boostrap the animation process
+            setTimeout(scroll_frame, 0)
+        }
+    </script>
+</body>
+</html>
