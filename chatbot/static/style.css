@@ -2,7 +2,6 @@
     background: #b3c6d8;
     padding: 0;
     margin: 0;
-    margin-top: 10px;
 }
 
 .message-area {
@@ -54,7 +53,7 @@
     margin-left: 10px;
     position: relative;
     margin-bottom: 20px;
-    border-radius: 30px;
+    border-radius: 0px;
 }
 
 .chat-msg {
@@ -66,7 +65,7 @@
     max-width: 75%;
     position: relative;
     margin-bottom: 20px;
-    border-radius: 30px;
+    border-radius: 0px;
     float: right;
     margin-right: 10px;
     background: #5A5EB9;

@@ -10,9 +10,12 @@
 </head>
 
 <body class="bg">
+    
+    <!-- chat messages -->
     <div id="allMessages" class="message-area">
     </div>
 
+    <!-- message box -->
     <form id="messageForm">
         <div class="message-input">
             <input type="text" class="chat-input" name="message" id="message" placeholder="Enter your message" style="margin-bottom:10px;">
@@ -23,17 +26,20 @@
     <script>
         var form = document.getElementById("messageForm");
 
+        //preventing page from reloading onSubmit
         function handleForm(event) {
             event.preventDefault();
         }
         form.addEventListener('submit', handleForm);
 
-        messages = ['Hello'];
+        // messages = ['Hello'];
+        messages = [];
 
         for (let index = 0; index < messages.length; index++) {
             appendToChat(messages[index], 'cm-msg-text');
         }
 
+        //appending child to html
         function appendToChat(message, elementClass) {
             var node = document.createElement("div");
             node.classList.add(elementClass);
@@ -43,35 +49,51 @@
             document.getElementById("allMessages").appendChild(node);
         }
 
+        //reqType and resType to track messages to provide related output 
         var reqType;
         var resType = 'none';
         async function sendMessage() {
+            //removing whitespace
             var newMsg = document.getElementById("message").value.trim();
 
+            //check for empty messages
             if (newMsg) {
+                //appending message to chat area
                 appendToChat(newMsg, 'chat-msg-self');
+                
+                //scrolling messages
                 scrollTo(document.scrollingElement, 800);
 
+                //preparing to call django api
                 var xhttp = new XMLHttpRequest();
                 xhttp.onreadystatechange = function() {
+                    //handling success response
                     if (this.readyState == 4 && this.status == 200) {
                         let res = JSON.parse(this.responseText);
                         let message = res.message;
                         resType = res.resType;
-                        console.log(resType);
+                        // console.log(resType);
+
+                        //appending response message to chatbox and scrolling the messages
                         appendToChat(message, 'cm-msg-text');
                         scrollTo(document.scrollingElement, 800);
 
+                        //clearing messagebox
                         document.getElementById("message").value = '';
-                    }
+                    } 
                 };
                 xhttp.open("POST", "http://127.0.0.1:8000/message", true);
                 xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+
+                //sending reqType related to resType for correct output
                 if (resType.localeCompare('ask_joke') == 0) {
                     reqType = "store_joke"
                 } else if (resType.localeCompare('ask_name') == 0) {
                     console.log('inside ask')
                     reqType = "name"
+                } else if (resType.localeCompare('get_joke') == 0) {
+                    console.log('inside get joke')
+                    reqType = "get_person_joke"
                 } else {
                     reqType = "none"
                 }
@@ -83,6 +105,7 @@
             }
         }
 
+        //to scroll a particular element
         function scrollTo(element, duration) {
             if (!element) {
                 return
